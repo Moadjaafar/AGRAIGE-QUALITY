@@ -61,7 +61,40 @@ class AgraigeMoulTests {
   factory AgraigeMoulTests.fromJson(Map<String, dynamic> json) =>
       _$AgraigeMoulTestsFromJson(json);
 
+  factory AgraigeMoulTests.fromApiJson(Map<String, dynamic> json) {
+    return AgraigeMoulTests(
+      id: json['id'],
+      moul6_8: json['moul6_8'],
+      moul8_10: json['moul8_10'],
+      moul10_12: json['moul10_12'],
+      moul12_16: json['moul12_16'],
+      moul16_20: json['moul16_20'],
+      moul20_26: json['moul20_26'],
+      moulGt30: json['moulGt30'],
+      idCamionDecharge: json['idCamionDecharge'],
+      dateCreation: DateTime.parse(json['dateCreation']),
+      dateModification: DateTime.parse(json['dateModification']),
+      isSynced: json['isSynced'] ?? false,
+      serverId: json['serverId'],
+    );
+  }
+
   Map<String, dynamic> toJson() => _$AgraigeMoulTestsToJson(this);
+
+  Map<String, dynamic> toApiJson() {
+    return {
+      if (id != null) 'id': id,
+      if (moul6_8 != null) 'moul6_8': moul6_8,
+      if (moul8_10 != null) 'moul8_10': moul8_10,
+      if (moul10_12 != null) 'moul10_12': moul10_12,
+      if (moul12_16 != null) 'moul12_16': moul12_16,
+      if (moul16_20 != null) 'moul16_20': moul16_20,
+      if (moul20_26 != null) 'moul20_26': moul20_26,
+      if (moulGt30 != null) 'moulGt30': moulGt30,
+      'idCamionDecharge': idCamionDecharge,
+      'dateCreation': dateCreation.toIso8601String(),
+    };
+  }
 
   Map<String, dynamic> toDatabase() {
     return {

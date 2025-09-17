@@ -5,320 +5,98 @@ import '../models/agraige_qualite_tests.dart';
 import '../models/agraige_moul_tests.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://your-api-domain.com/api';
+  static const String baseUrl = 'http://10.0.2.2:5071/api';
 
   static Map<String, String> get headers => {
     'Content-Type': 'application/json',
   };
 
-  static Future<List<CamionDecharge>> getAllCamionDecharges() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/camiondecharge'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => CamionDecharge.fromJson(json)).toList();
-      } else {
-        throw ApiException('Failed to load camions: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<CamionDecharge> getCamionDechargeById(int id) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/camiondecharge/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        return CamionDecharge.fromJson(json.decode(response.body));
-      } else if (response.statusCode == 404) {
-        throw ApiException('Camion not found');
-      } else {
-        throw ApiException('Failed to load camion: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
   static Future<CamionDecharge> createCamionDecharge(CamionDecharge camion) async {
     try {
+      final payload = camion.toApiJson();
+      print('Sending camion payload: ${json.encode(payload)}');
+
       final response = await http.post(
         Uri.parse('$baseUrl/camiondecharge'),
         headers: headers,
-        body: json.encode(camion.toJson()),
+        body: json.encode(payload),
       );
 
-      if (response.statusCode == 201) {
-        return CamionDecharge.fromJson(json.decode(response.body));
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return CamionDecharge.fromApiJson(json.decode(response.body));
       } else {
-        throw ApiException('Failed to create camion: ${response.statusCode}');
+        throw ApiException('Failed to create camion: ${response.statusCode}. Response: ${response.body}');
       }
     } catch (e) {
       throw ApiException('Network error: $e');
     }
   }
 
-  static Future<CamionDecharge> updateCamionDecharge(int id, Map<String, dynamic> updates) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/camiondecharge/$id'),
-        headers: headers,
-        body: json.encode(updates),
-      );
-
-      if (response.statusCode == 200) {
-        return CamionDecharge.fromJson(json.decode(response.body));
-      } else {
-        throw ApiException('Failed to update camion: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<void> deleteCamionDecharge(int id) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/camiondecharge/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode != 204) {
-        throw ApiException('Failed to delete camion: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<List<AgraigeQualiteTests>> getAllQualiteTests() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/agraigequalitetests'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => AgraigeQualiteTests.fromJson(json)).toList();
-      } else {
-        throw ApiException('Failed to load qualite tests: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<AgraigeQualiteTests> getQualiteTestById(int id) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/agraigequalitetests/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        return AgraigeQualiteTests.fromJson(json.decode(response.body));
-      } else if (response.statusCode == 404) {
-        throw ApiException('Qualite test not found');
-      } else {
-        throw ApiException('Failed to load qualite test: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<List<AgraigeQualiteTests>> getQualiteTestsByCamionId(int camionId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/agraigequalitetests/by-camion/$camionId'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => AgraigeQualiteTests.fromJson(json)).toList();
-      } else {
-        throw ApiException('Failed to load qualite tests: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
 
   static Future<AgraigeQualiteTests> createQualiteTest(AgraigeQualiteTests test) async {
     try {
+      final payload = test.toApiJson();
+      print('Sending qualite test payload: ${json.encode(payload)}');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/agraigequalitetests'),
+        Uri.parse('$baseUrl/AgraigeQualiteTests'),
         headers: headers,
-        body: json.encode(test.toJson()),
+        body: json.encode(payload),
       );
 
-      if (response.statusCode == 201) {
-        return AgraigeQualiteTests.fromJson(json.decode(response.body));
+      print('Qualite test response status: ${response.statusCode}');
+      print('Qualite test response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return AgraigeQualiteTests.fromApiJson(json.decode(response.body));
       } else {
-        throw ApiException('Failed to create qualite test: ${response.statusCode}');
+        throw ApiException('Failed to create qualite test: ${response.statusCode}. Response: ${response.body}');
       }
     } catch (e) {
       throw ApiException('Network error: $e');
     }
   }
 
-  static Future<AgraigeQualiteTests> updateQualiteTest(int id, Map<String, dynamic> updates) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/agraigequalitetests/$id'),
-        headers: headers,
-        body: json.encode(updates),
-      );
-
-      if (response.statusCode == 200) {
-        return AgraigeQualiteTests.fromJson(json.decode(response.body));
-      } else {
-        throw ApiException('Failed to update qualite test: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<void> deleteQualiteTest(int id) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/agraigequalitetests/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode != 204) {
-        throw ApiException('Failed to delete qualite test: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<List<AgraigeMoulTests>> getAllMoulTests() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/agraigemoutests'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => AgraigeMoulTests.fromJson(json)).toList();
-      } else {
-        throw ApiException('Failed to load moul tests: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<AgraigeMoulTests> getMoulTestById(int id) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/agraigemoutests/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        return AgraigeMoulTests.fromJson(json.decode(response.body));
-      } else if (response.statusCode == 404) {
-        throw ApiException('Moul test not found');
-      } else {
-        throw ApiException('Failed to load moul test: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<List<AgraigeMoulTests>> getMoulTestsByCamionId(int camionId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/agraigemoutests/by-camion/$camionId'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonList = json.decode(response.body);
-        return jsonList.map((json) => AgraigeMoulTests.fromJson(json)).toList();
-      } else {
-        throw ApiException('Failed to load moul tests: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
 
   static Future<AgraigeMoulTests> createMoulTest(AgraigeMoulTests test) async {
     try {
+      final payload = test.toApiJson();
+      print('Sending moul test payload: ${json.encode(payload)}');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/agraigemoutests'),
+        Uri.parse('$baseUrl/AgraigeMoulTests'),
         headers: headers,
-        body: json.encode(test.toJson()),
+        body: json.encode(payload),
       );
 
-      if (response.statusCode == 201) {
-        return AgraigeMoulTests.fromJson(json.decode(response.body));
+      print('Moul test response status: ${response.statusCode}');
+      print('Moul test response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return AgraigeMoulTests.fromApiJson(json.decode(response.body));
       } else {
-        throw ApiException('Failed to create moul test: ${response.statusCode}');
+        throw ApiException('Failed to create moul test: ${response.statusCode}. Response: ${response.body}');
       }
     } catch (e) {
       throw ApiException('Network error: $e');
     }
   }
 
-  static Future<AgraigeMoulTests> updateMoulTest(int id, Map<String, dynamic> updates) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/agraigemoutests/$id'),
-        headers: headers,
-        body: json.encode(updates),
-      );
-
-      if (response.statusCode == 200) {
-        return AgraigeMoulTests.fromJson(json.decode(response.body));
-      } else {
-        throw ApiException('Failed to update moul test: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
-
-  static Future<void> deleteMoulTest(int id) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/agraigemoutests/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode != 204) {
-        throw ApiException('Failed to delete moul test: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw ApiException('Network error: $e');
-    }
-  }
 
   static Future<bool> testConnection() async {
     try {
-      final response = await http.get(
+      // Simple connection test - try to make a POST request to test server availability
+      final response = await http.post(
         Uri.parse('$baseUrl/camiondecharge'),
         headers: headers,
+        body: json.encode({}), // Empty body - will likely fail validation but confirms server is reachable
       ).timeout(const Duration(seconds: 10));
 
-      return response.statusCode == 200;
+      // Accept any response (even 400 bad request) as it means server is reachable
+      return response.statusCode >= 200 && response.statusCode < 500;
     } catch (e) {
       return false;
     }

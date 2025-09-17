@@ -154,64 +154,222 @@ class _ExportPageState extends State<ExportPage> {
 
       currentRow++;
 
-      // Add quality tests
+      // Add tests side by side (quality tests on left, mold tests on right)
       final qualiteTests = await _localRepository.getQualiteTestsByDechargeId(camion.idDecharge!);
-      if (qualiteTests.isNotEmpty) {
-        sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue('--- Tests de Qualité ---');
-        currentRow++;
-
-        sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue('Agraige A');
-        sheet.cell(CellIndex.indexByString('B$currentRow')).value = TextCellValue('Agraige B');
-        sheet.cell(CellIndex.indexByString('C$currentRow')).value = TextCellValue('Agraige C');
-        sheet.cell(CellIndex.indexByString('D$currentRow')).value = TextCellValue('Agraige MAQ');
-        sheet.cell(CellIndex.indexByString('E$currentRow')).value = TextCellValue('Agraige CHIN');
-        sheet.cell(CellIndex.indexByString('F$currentRow')).value = TextCellValue('Agraige FP');
-        sheet.cell(CellIndex.indexByString('G$currentRow')).value = TextCellValue('Agraige G');
-        sheet.cell(CellIndex.indexByString('H$currentRow')).value = TextCellValue('Agraige Anchois');
-        sheet.cell(CellIndex.indexByString('I$currentRow')).value = TextCellValue('Petit Caliber');
-        sheet.cell(CellIndex.indexByString('J$currentRow')).value = TextCellValue('Total');
-        currentRow++;
-
-        for (AgraigeQualiteTests test in qualiteTests) {
-          sheet.cell(CellIndex.indexByString('A$currentRow')).value = IntCellValue(test.agraigeA ?? 0);
-          sheet.cell(CellIndex.indexByString('B$currentRow')).value = IntCellValue(test.agraigeB ?? 0);
-          sheet.cell(CellIndex.indexByString('C$currentRow')).value = IntCellValue(test.agraigeC ?? 0);
-          sheet.cell(CellIndex.indexByString('D$currentRow')).value = IntCellValue(test.agraigeMAQ ?? 0);
-          sheet.cell(CellIndex.indexByString('E$currentRow')).value = IntCellValue(test.agraigeCHIN ?? 0);
-          sheet.cell(CellIndex.indexByString('F$currentRow')).value = IntCellValue(test.agraigeFP ?? 0);
-          sheet.cell(CellIndex.indexByString('G$currentRow')).value = IntCellValue(test.agraigeG ?? 0);
-          sheet.cell(CellIndex.indexByString('H$currentRow')).value = IntCellValue(test.agraigeAnchois ?? 0);
-          sheet.cell(CellIndex.indexByString('I$currentRow')).value = IntCellValue(test.petitCaliber ?? 0);
-          sheet.cell(CellIndex.indexByString('J$currentRow')).value = IntCellValue(test.totalQuantity);
-          currentRow++;
-        }
-      }
-
-      // Add mold tests
       final moulTests = await _localRepository.getMoulTestsByDechargeId(camion.idDecharge!);
-      if (moulTests.isNotEmpty) {
-        sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue('--- Tests de Moule ---');
+
+      if (qualiteTests.isNotEmpty || moulTests.isNotEmpty) {
+        // Headers for both test types
+        sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue('--- Tests de Qualité ---');
+        sheet.cell(CellIndex.indexByString('D$currentRow')).value = TextCellValue('--- Tests de Moule ---');
         currentRow++;
 
-        sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue('6-8mm');
-        sheet.cell(CellIndex.indexByString('B$currentRow')).value = TextCellValue('8-10mm');
-        sheet.cell(CellIndex.indexByString('C$currentRow')).value = TextCellValue('10-12mm');
-        sheet.cell(CellIndex.indexByString('D$currentRow')).value = TextCellValue('12-16mm');
-        sheet.cell(CellIndex.indexByString('E$currentRow')).value = TextCellValue('16-20mm');
-        sheet.cell(CellIndex.indexByString('F$currentRow')).value = TextCellValue('20-26mm');
-        sheet.cell(CellIndex.indexByString('G$currentRow')).value = TextCellValue('>30mm');
-        currentRow++;
+        int testRowStart = currentRow;
+        int maxQualiteRows = 0;
+        int maxMoulRows = 0;
 
-        for (AgraigeMoulTests test in moulTests) {
-          sheet.cell(CellIndex.indexByString('A$currentRow')).value = IntCellValue(test.moul6_8 ?? 0);
-          sheet.cell(CellIndex.indexByString('B$currentRow')).value = IntCellValue(test.moul8_10 ?? 0);
-          sheet.cell(CellIndex.indexByString('C$currentRow')).value = IntCellValue(test.moul10_12 ?? 0);
-          sheet.cell(CellIndex.indexByString('D$currentRow')).value = IntCellValue(test.moul12_16 ?? 0);
-          sheet.cell(CellIndex.indexByString('E$currentRow')).value = IntCellValue(test.moul16_20 ?? 0);
-          sheet.cell(CellIndex.indexByString('F$currentRow')).value = IntCellValue(test.moul20_26 ?? 0);
-          sheet.cell(CellIndex.indexByString('G$currentRow')).value = IntCellValue(test.moulGt30 ?? 0);
-          currentRow++;
+        // Add quality tests (vertical in columns A-B)
+        if (qualiteTests.isNotEmpty) {
+          int qualiteRow = testRowStart;
+
+          // Calculate averages for quality tests
+          double avgA = qualiteTests.map((t) => t.agraigeA ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgB = qualiteTests.map((t) => t.agraigeB ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgC = qualiteTests.map((t) => t.agraigeC ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgMAQ = qualiteTests.map((t) => t.agraigeMAQ ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgCHIN = qualiteTests.map((t) => t.agraigeCHIN ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgFP = qualiteTests.map((t) => t.agraigeFP ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgG = qualiteTests.map((t) => t.agraigeG ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgAnchois = qualiteTests.map((t) => t.agraigeAnchois ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgPetitCaliber = qualiteTests.map((t) => t.petitCaliber ?? 0).reduce((a, b) => a + b) / qualiteTests.length;
+          double avgTotal = qualiteTests.map((t) => t.totalQuantity).reduce((a, b) => a + b) / qualiteTests.length;
+
+          for (AgraigeQualiteTests test in qualiteTests) {
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage A');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeA ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage B');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeB ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage C');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeC ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage MAQ');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeMAQ ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage CHIN');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeCHIN ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage FP');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeFP ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage G');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeG ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Agreage Anchois');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.agraigeAnchois ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Petit Caliber');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.petitCaliber ?? 0);
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Total');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = IntCellValue(test.totalQuantity);
+            qualiteRow++;
+
+            qualiteRow++; // Empty row between test records
+          }
+
+          // Add averages section for quality tests
+          if (qualiteTests.length > 1) {
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('=== MOYENNES QUALITÉ ===');
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage A');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgA.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage B');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgB.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage C');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgC.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage MAQ');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgMAQ.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage CHIN');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgCHIN.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage FP');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgFP.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage G');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgG.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Agreage Anchois');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgAnchois.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Petit Caliber');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgPetitCaliber.toStringAsFixed(2)));
+            qualiteRow++;
+
+            sheet.cell(CellIndex.indexByString('A$qualiteRow')).value = TextCellValue('Moyen Total');
+            sheet.cell(CellIndex.indexByString('B$qualiteRow')).value = DoubleCellValue(double.parse(avgTotal.toStringAsFixed(2)));
+            qualiteRow++;
+          }
+
+          maxQualiteRows = qualiteRow - testRowStart;
         }
+
+        // Add mold tests (vertical in columns D-E)
+        if (moulTests.isNotEmpty) {
+          int moulRow = testRowStart;
+
+          // Calculate averages for mold tests
+          double avg6_8 = moulTests.map((t) => t.moul6_8 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avg8_10 = moulTests.map((t) => t.moul8_10 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avg10_12 = moulTests.map((t) => t.moul10_12 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avg12_16 = moulTests.map((t) => t.moul12_16 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avg16_20 = moulTests.map((t) => t.moul16_20 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avg20_26 = moulTests.map((t) => t.moul20_26 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avgGt30 = moulTests.map((t) => t.moulGt30 ?? 0).reduce((a, b) => a + b) / moulTests.length;
+          double avgMoulTotal = moulTests.map((t) => t.totalQuantity).reduce((a, b) => a + b) / moulTests.length;
+
+          for (AgraigeMoulTests test in moulTests) {
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 6-8mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul6_8 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 8-10mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul8_10 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 10-12mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul10_12 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 12-16mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul12_16 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 16-20mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul16_20 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 20-26mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul20_26 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul >30mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moulGt30 ?? 0);
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Total');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.totalQuantity);
+            moulRow++;
+
+            moulRow++; // Empty row between test records
+          }
+
+          // Add averages section for mold tests
+          if (moulTests.length > 1) {
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('=== MOYENNES MOULE ===');
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 6-8mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg6_8.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 8-10mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg8_10.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 10-12mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg10_12.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 12-16mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg12_16.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 16-20mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg16_20.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 20-26mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg20_26.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul >30mm');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avgGt30.toStringAsFixed(2)));
+            moulRow++;
+
+            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Total');
+            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avgMoulTotal.toStringAsFixed(2)));
+            moulRow++;
+          }
+
+          maxMoulRows = moulRow - testRowStart;
+        }
+
+        // Move currentRow to after the longest column
+        currentRow = testRowStart + (maxQualiteRows > maxMoulRows ? maxQualiteRows : maxMoulRows);
       }
 
       currentRow++; // Empty row between camions
@@ -245,31 +403,35 @@ class _ExportPageState extends State<ExportPage> {
 
       for (CamionDecharge camion in _selectedCamions) {
         try {
-          // Export camion if not synced
-          if (!camion.isSynced) {
-            final serverCamion = await ApiService.createCamionDecharge(camion);
-            await _localRepository.markCamionDechargeAsSynced(
-              camion.idDecharge!,
-              serverCamion.idDecharge!
-            );
-          }
+          // Always export camion (allows re-export after adding new tests)
+          final serverCamion = await ApiService.createCamionDecharge(camion);
+          int serverCamionId = serverCamion.idDecharge!;
 
-          // Export quality tests
+          // Export quality tests (always export with decharge)
           final qualiteTests = await _localRepository.getQualiteTestsByDechargeId(camion.idDecharge!);
+          print('Found ${qualiteTests.length} quality tests for camion ${camion.matCamion}');
           for (AgraigeQualiteTests test in qualiteTests) {
-            if (!test.isSynced) {
-              final serverTest = await ApiService.createQualiteTest(test);
-              await _localRepository.markQualiteTestAsSynced(test.id!, serverTest.id!);
-            }
+            print('Quality test ${test.id} - isSynced: ${test.isSynced}');
+            // Create a copy of the test with the correct server camion ID
+            final testForServer = test.copyWith(idCamionDecharge: serverCamionId);
+            print('Exporting quality test ${test.id} with server camion ID: $serverCamionId');
+            final serverTest = await ApiService.createQualiteTest(testForServer);
+            await _localRepository.markQualiteTestAsSynced(test.id!, serverTest.id!);
+            print('Successfully exported quality test ${test.id}');
           }
 
-          // Export mold tests
+          // Export mold tests (always export with decharge)
           final moulTests = await _localRepository.getMoulTestsByDechargeId(camion.idDecharge!);
+          print('Found ${moulTests.length} mold tests for camion ${camion.matCamion}');
+
           for (AgraigeMoulTests test in moulTests) {
-            if (!test.isSynced) {
-              final serverTest = await ApiService.createMoulTest(test);
-              await _localRepository.markMoulTestAsSynced(test.id!, serverTest.id!);
-            }
+            print('Mold test ${test.id} - isSynced: ${test.isSynced}');
+            // Create a copy of the test with the correct server camion ID
+            final testForServer = test.copyWith(idCamionDecharge: serverCamionId);
+            print('Exporting mold test ${test.id} with server camion ID: $serverCamionId');
+            final serverTest = await ApiService.createMoulTest(testForServer);
+            await _localRepository.markMoulTestAsSynced(test.id!, serverTest.id!);
+            print('Successfully exported mold test ${test.id}');
           }
 
           successCount++;

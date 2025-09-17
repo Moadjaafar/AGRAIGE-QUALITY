@@ -69,7 +69,44 @@ class AgraigeQualiteTests {
   factory AgraigeQualiteTests.fromJson(Map<String, dynamic> json) =>
       _$AgraigeQualiteTestsFromJson(json);
 
+  factory AgraigeQualiteTests.fromApiJson(Map<String, dynamic> json) {
+    return AgraigeQualiteTests(
+      id: json['id'],
+      agraigeA: json['agraigeA'],
+      agraigeB: json['agraigeB'],
+      agraigeC: json['agraigeC'],
+      agraigeMAQ: json['agraigeMAQ'],
+      agraigeCHIN: json['agraigeCHIN'],
+      agraigeFP: json['agraigeFP'],
+      agraigeG: json['agraigeG'],
+      agraigeAnchois: json['agraigeAnchois'],
+      petitCaliber: json['petitCaliber'],
+      idCamionDecharge: json['idCamionDecharge'],
+      dateCreation: DateTime.parse(json['dateCreation']),
+      dateModification: DateTime.parse(json['dateModification']),
+      isSynced: json['isSynced'] ?? false,
+      serverId: json['serverId'],
+    );
+  }
+
   Map<String, dynamic> toJson() => _$AgraigeQualiteTestsToJson(this);
+
+  Map<String, dynamic> toApiJson() {
+    return {
+      if (id != null) 'id': id,
+      if (agraigeA != null) 'agraigeA': agraigeA,
+      if (agraigeB != null) 'agraigeB': agraigeB,
+      if (agraigeC != null) 'agraigeC': agraigeC,
+      if (agraigeMAQ != null) 'agraigeMAQ': agraigeMAQ,
+      if (agraigeCHIN != null) 'agraigeCHIN': agraigeCHIN,
+      if (agraigeFP != null) 'agraigeFP': agraigeFP,
+      if (agraigeG != null) 'agraigeG': agraigeG,
+      if (agraigeAnchois != null) 'agraigeAnchois': agraigeAnchois,
+      if (petitCaliber != null) 'petitCaliber': petitCaliber,
+      'idCamionDecharge': idCamionDecharge,
+      'dateCreation': dateCreation.toIso8601String(),
+    };
+  }
 
   Map<String, dynamic> toDatabase() {
     return {

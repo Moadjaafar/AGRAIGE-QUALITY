@@ -153,8 +153,8 @@ class ExportService {
         'Heure Decharge',
         'Heure Traitement',
         'Temperature',
-        'Nbr Agraige Qualite',
-        'Nbr Agraige Moule',
+        'Nbr Agreage Qualite',
+        'Nbr Agreage Moule',
         'Is Exported',
         'Date Creation',
         'Date Modification',
@@ -192,17 +192,17 @@ class ExportService {
     }
 
     List<List<String>> csvData = [
-      ['=== AGRAIGE QUALITE TESTS DATA ==='],
+      ['=== AGREAGE QUALITE TESTS DATA ==='],
       [
         'ID',
-        'Agraige A',
-        'Agraige B',
-        'Agraige C',
-        'Agraige MAQ',
-        'Agraige CHIN',
-        'Agraige FP',
-        'Agraige G',
-        'Agraige Anchois',
+        'Agreage A',
+        'Agreage B',
+        'Agreage C',
+        'Agreage MAQ',
+        'Agreage CHIN',
+        'Agreage FP',
+        'Agreage G',
+        'Agreage Anchois',
         'Petit Caliber',
         'ID Camion Decharge',
         'Date Creation',
@@ -244,7 +244,7 @@ class ExportService {
     }
 
     List<List<String>> csvData = [
-      ['=== AGRAIGE MOUL TESTS DATA ==='],
+      ['=== AGREAGE MOUL TESTS DATA ==='],
       [
         'ID',
         'Moul 6-8',

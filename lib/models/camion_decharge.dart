@@ -62,7 +62,45 @@ class CamionDecharge {
   factory CamionDecharge.fromJson(Map<String, dynamic> json) =>
       _$CamionDechargeFromJson(json);
 
+  factory CamionDecharge.fromApiJson(Map<String, dynamic> json) {
+    return CamionDecharge(
+      idDecharge: json['idDecharge'],
+      matCamion: json['matCamion'],
+      bateau: json['bateau'],
+      maree: json['maree'],
+      heureDecharge: json['heureDecharge'] != null
+          ? DateTime.parse(json['heureDecharge'])
+          : null,
+      heureTraitement: json['heureTraitement'] != null
+          ? DateTime.parse(json['heureTraitement'])
+          : null,
+      temperature: json['temperature']?.toDouble(),
+      nbrAgraigeQualite: json['nbrAgraigeQualite'],
+      nbrAgraigeMoule: json['nbrAgraigeMoule'],
+      isExported: json['isExported'] ?? false,
+      dateCreation: DateTime.parse(json['dateCreation']),
+      dateModification: DateTime.parse(json['dateModification']),
+      isSynced: json['isSynced'] ?? false,
+      serverId: json['serverId'],
+    );
+  }
+
   Map<String, dynamic> toJson() => _$CamionDechargeToJson(this);
+
+  Map<String, dynamic> toApiJson() {
+    return {
+      if (idDecharge != null) 'idDecharge': idDecharge,
+      'matCamion': matCamion,
+      if (bateau != null) 'bateau': bateau,
+      if (maree != null) 'maree': maree,
+      if (heureDecharge != null) 'heureDecharge': heureDecharge!.toIso8601String(),
+      if (heureTraitement != null) 'heureTraitement': heureTraitement!.toIso8601String(),
+      if (temperature != null) 'temperature': temperature,
+      if (nbrAgraigeQualite != null) 'nbrAgraigeQualite': nbrAgraigeQualite,
+      if (nbrAgraigeMoule != null) 'nbrAgraigeMoule': nbrAgraigeMoule,
+      'dateCreation': dateCreation.toIso8601String(),
+    };
+  }
 
   Map<String, dynamic> toDatabase() {
     return {
