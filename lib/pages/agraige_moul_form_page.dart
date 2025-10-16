@@ -274,9 +274,16 @@ class _AgraigeMoulFormPageState extends State<AgraigeMoulFormPage> {
                               ),
                               value: _selectedCamionId,
                               items: _camions.map((camion) {
+                                String displayText = camion.matCamion;
+                                if (camion.bateau != null && camion.bateau!.isNotEmpty) {
+                                  displayText += ' - ${camion.bateau}';
+                                }
+                                if (camion.maree != null && camion.maree!.isNotEmpty) {
+                                  displayText += ' (${camion.maree})';
+                                }
                                 return DropdownMenuItem<int>(
                                   value: camion.idDecharge,
-                                  child: Text('${camion.matCamion} - ${camion.bateau ?? "No boat"}'),
+                                  child: Text(displayText),
                                 );
                               }).toList(),
                               onChanged: _isEditing

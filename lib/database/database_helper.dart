@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const _databaseName = "fish_industry.db";
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
 
   static const tableCamionDecharge = 'camion_decharge';
   static const tableAgraigeQualite = 'agraige_qualite_tests';
@@ -24,7 +24,7 @@ class DatabaseHelper {
   _initDatabase() async {
     String path = join(await getDatabasesPath(), _databaseName);
     return await openDatabase(path,
-        version: _databaseVersion, onCreate: _onCreate);
+        version: _databaseVersion, onCreate: _onCreate, onUpgrade: _onUpgrade);
   }
 
   Future _onCreate(Database db, int version) async {
@@ -37,6 +37,7 @@ class DatabaseHelper {
             heure_decharge TEXT,
             heure_traitement TEXT,
             temperature REAL,
+            pois_decharge REAL,
             nbr_agraige_qualite INTEGER,
             nbr_agraige_moule INTEGER,
             is_exported INTEGER DEFAULT 0,
@@ -86,6 +87,12 @@ class DatabaseHelper {
             FOREIGN KEY (id_camion_decharge) REFERENCES $tableCamionDecharge (id_decharge)
           )
           ''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE $tableCamionDecharge ADD COLUMN pois_decharge REAL');
+    }
   }
 
   Future<int> insert(String table, Map<String, dynamic> row) async {

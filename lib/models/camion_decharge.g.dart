@@ -19,6 +19,7 @@ CamionDecharge _$CamionDechargeFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['heure_traitement'] as String),
       temperature: (json['temperature'] as num?)?.toDouble(),
+      poisDecharge: (json['pois_decharge'] as num?)?.toDouble(),
       nbrAgraigeQualite: (json['nbr_agraige_qualite'] as num?)?.toInt(),
       nbrAgraigeMoule: (json['nbr_agraige_moule'] as num?)?.toInt(),
       isExported: json['is_exported'] as bool? ?? false,
@@ -37,6 +38,7 @@ Map<String, dynamic> _$CamionDechargeToJson(CamionDecharge instance) =>
       'heure_decharge': instance.heureDecharge?.toIso8601String(),
       'heure_traitement': instance.heureTraitement?.toIso8601String(),
       'temperature': instance.temperature,
+      'pois_decharge': instance.poisDecharge,
       'nbr_agraige_qualite': instance.nbrAgraigeQualite,
       'nbr_agraige_moule': instance.nbrAgraigeMoule,
       'is_exported': instance.isExported,

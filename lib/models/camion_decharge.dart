@@ -21,6 +21,9 @@ class CamionDecharge {
 
   final double? temperature;
 
+  @JsonKey(name: 'pois_decharge')
+  final double? poisDecharge;
+
   @JsonKey(name: 'nbr_agraige_qualite')
   final int? nbrAgraigeQualite;
 
@@ -50,6 +53,7 @@ class CamionDecharge {
     this.heureDecharge,
     this.heureTraitement,
     this.temperature,
+    this.poisDecharge,
     this.nbrAgraigeQualite,
     this.nbrAgraigeMoule,
     this.isExported = false,
@@ -75,6 +79,7 @@ class CamionDecharge {
           ? DateTime.parse(json['heureTraitement'])
           : null,
       temperature: json['temperature']?.toDouble(),
+      poisDecharge: json['poisDecharge']?.toDouble(),
       nbrAgraigeQualite: json['nbrAgraigeQualite'],
       nbrAgraigeMoule: json['nbrAgraigeMoule'],
       isExported: json['isExported'] ?? false,
@@ -96,6 +101,7 @@ class CamionDecharge {
       if (heureDecharge != null) 'heureDecharge': heureDecharge!.toIso8601String(),
       if (heureTraitement != null) 'heureTraitement': heureTraitement!.toIso8601String(),
       if (temperature != null) 'temperature': temperature,
+      if (poisDecharge != null) 'poisDecharge': poisDecharge,
       if (nbrAgraigeQualite != null) 'nbrAgraigeQualite': nbrAgraigeQualite,
       if (nbrAgraigeMoule != null) 'nbrAgraigeMoule': nbrAgraigeMoule,
       'dateCreation': dateCreation.toIso8601String(),
@@ -110,6 +116,7 @@ class CamionDecharge {
       'heure_decharge': heureDecharge?.toIso8601String(),
       'heure_traitement': heureTraitement?.toIso8601String(),
       'temperature': temperature,
+      'pois_decharge': poisDecharge,
       'nbr_agraige_qualite': nbrAgraigeQualite,
       'nbr_agraige_moule': nbrAgraigeMoule,
       'is_exported': isExported ? 1 : 0,
@@ -133,6 +140,7 @@ class CamionDecharge {
           ? DateTime.parse(map['heure_traitement'])
           : null,
       temperature: map['temperature']?.toDouble(),
+      poisDecharge: map['pois_decharge']?.toDouble(),
       nbrAgraigeQualite: map['nbr_agraige_qualite'],
       nbrAgraigeMoule: map['nbr_agraige_moule'],
       isExported: map['is_exported'] == 1,
@@ -151,6 +159,7 @@ class CamionDecharge {
     DateTime? heureDecharge,
     DateTime? heureTraitement,
     double? temperature,
+    double? poisDecharge,
     int? nbrAgraigeQualite,
     int? nbrAgraigeMoule,
     bool? isExported,
@@ -167,6 +176,7 @@ class CamionDecharge {
       heureDecharge: heureDecharge ?? this.heureDecharge,
       heureTraitement: heureTraitement ?? this.heureTraitement,
       temperature: temperature ?? this.temperature,
+      poisDecharge: poisDecharge ?? this.poisDecharge,
       nbrAgraigeQualite: nbrAgraigeQualite ?? this.nbrAgraigeQualite,
       nbrAgraigeMoule: nbrAgraigeMoule ?? this.nbrAgraigeMoule,
       isExported: isExported ?? this.isExported,

@@ -20,6 +20,7 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
   late final TextEditingController _bateauController;
   late final TextEditingController _mareeController;
   late final TextEditingController _temperatureController;
+  late final TextEditingController _poisDechargeController;
 
   DateTime? _heureDecharge;
   DateTime? _heureTraitement;
@@ -37,6 +38,9 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
     _temperatureController = TextEditingController(
       text: widget.camion?.temperature?.toString() ?? '',
     );
+    _poisDechargeController = TextEditingController(
+      text: widget.camion?.poisDecharge?.toString() ?? '',
+    );
 
     _heureDecharge = widget.camion?.heureDecharge;
     _heureTraitement = widget.camion?.heureTraitement;
@@ -48,6 +52,7 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
     _bateauController.dispose();
     _mareeController.dispose();
     _temperatureController.dispose();
+    _poisDechargeController.dispose();
     super.dispose();
   }
 
@@ -109,6 +114,9 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
         temperature: _temperatureController.text.trim().isEmpty
             ? null
             : double.tryParse(_temperatureController.text.trim()),
+        poisDecharge: _poisDechargeController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_poisDechargeController.text.trim()),
         nbrAgraigeQualite: widget.camion?.nbrAgraigeQualite,
         nbrAgraigeMoule: widget.camion?.nbrAgraigeMoule,
         isExported: widget.camion?.isExported ?? false,
@@ -354,6 +362,32 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
                             }
                             if (temp < -50 || temp > 50) {
                               return 'Temperature must be between -50°C and 50°C';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _poisDechargeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Poids Décharge (kg)',
+                          hintText: 'Enter discharge weight',
+                          prefixIcon: Icon(Icons.scale),
+                          suffixText: 'kg',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            final weight = double.tryParse(value.trim());
+                            if (weight == null) {
+                              return 'Please enter a valid number';
+                            }
+                            if (weight < 0) {
+                              return 'Weight must be a positive number';
+                            }
+                            if (weight > 999999.999) {
+                              return 'Weight cannot exceed 999,999.999 kg';
                             }
                           }
                           return null;

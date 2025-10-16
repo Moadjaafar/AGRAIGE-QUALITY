@@ -73,6 +73,8 @@ class _AgraigeMoulListPageState extends State<AgraigeMoulListPage> {
           ),
         );
         return camion.matCamion.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            (camion.bateau?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+            (camion.maree?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
             test.id.toString().contains(_searchQuery);
       }).toList();
     }
@@ -181,7 +183,7 @@ class _AgraigeMoulListPageState extends State<AgraigeMoulListPage> {
               children: [
                 TextField(
                   decoration: const InputDecoration(
-                    hintText: 'Search by truck or test ID...',
+                    hintText: 'Search by truck, boat, tide, or test ID...',
                     prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(),
                   ),
@@ -204,10 +206,19 @@ class _AgraigeMoulListPageState extends State<AgraigeMoulListPage> {
                       value: null,
                       child: Text('All Trucks'),
                     ),
-                    ..._camions.map((camion) => DropdownMenuItem<int?>(
-                      value: camion.idDecharge,
-                      child: Text(camion.matCamion),
-                    )),
+                    ..._camions.map((camion) {
+                      String displayText = camion.matCamion;
+                      if (camion.bateau != null && camion.bateau!.isNotEmpty) {
+                        displayText += ' - ${camion.bateau}';
+                      }
+                      if (camion.maree != null && camion.maree!.isNotEmpty) {
+                        displayText += ' (${camion.maree})';
+                      }
+                      return DropdownMenuItem<int?>(
+                        value: camion.idDecharge,
+                        child: Text(displayText),
+                      );
+                    }),
                   ],
                   onChanged: (value) {
                     setState(() {

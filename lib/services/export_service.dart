@@ -153,6 +153,7 @@ class ExportService {
         'Heure Decharge',
         'Heure Traitement',
         'Temperature',
+        'Poids Decharge (kg)',
         'Nbr Agreage Qualite',
         'Nbr Agreage Moule',
         'Is Exported',
@@ -172,6 +173,7 @@ class ExportService {
         camion.heureDecharge?.toIso8601String() ?? '',
         camion.heureTraitement?.toIso8601String() ?? '',
         camion.temperature?.toString() ?? '',
+        camion.poisDecharge?.toString() ?? '',
         camion.nbrAgraigeQualite?.toString() ?? '',
         camion.nbrAgraigeMoule?.toString() ?? '',
         camion.isExported.toString(),
@@ -187,8 +189,10 @@ class ExportService {
 
   static Future<List<List<String>>> _exportQualiteTestsToCSV(DateTime? fromDate, DateTime? toDate) async {
     List<AgraigeQualiteTests> tests = await _localRepository.getAllQualiteTests();
+    print('Total quality tests found: ${tests.length}');
     if (fromDate != null || toDate != null) {
       tests = _filterQualiteTestsByDateRange(tests, fromDate, toDate);
+      print('Quality tests after date filtering: ${tests.length}');
     }
 
     List<List<String>> csvData = [
@@ -239,8 +243,10 @@ class ExportService {
 
   static Future<List<List<String>>> _exportMoulTestsToCSV(DateTime? fromDate, DateTime? toDate) async {
     List<AgraigeMoulTests> tests = await _localRepository.getAllMoulTests();
+    print('Total mold tests found: ${tests.length}');
     if (fromDate != null || toDate != null) {
       tests = _filterMoulTestsByDateRange(tests, fromDate, toDate);
+      print('Mold tests after date filtering: ${tests.length}');
     }
 
     List<List<String>> csvData = [

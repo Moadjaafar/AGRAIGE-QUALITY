@@ -10,6 +10,7 @@ import '../models/agraige_qualite_tests.dart';
 import '../models/agraige_moul_tests.dart';
 import '../repositories/local_repository.dart';
 import '../services/api_service.dart';
+import '../database/database_helper.dart';
 
 class ExportPage extends StatefulWidget {
   const ExportPage({super.key});
@@ -25,6 +26,7 @@ class _ExportPageState extends State<ExportPage> {
   bool _isLoading = true;
   bool _isExporting = false;
   String _searchQuery = '';
+  bool _resetSyncStatus = false;
 
   @override
   void initState() {
@@ -403,6 +405,11 @@ class _ExportPageState extends State<ExportPage> {
 
       for (CamionDecharge camion in _selectedCamions) {
         try {
+          // Reset sync status if requested
+          if (_resetSyncStatus) {
+            await _resetCamionSyncStatus(camion.idDecharge!);
+          }
+
           // Always export camion (allows re-export after adding new tests)
           final serverCamion = await ApiService.createCamionDecharge(camion);
           int serverCamionId = serverCamion.idDecharge!;
@@ -557,6 +564,37 @@ class _ExportPageState extends State<ExportPage> {
     );
   }
 
+  Future<void> _resetCamionSyncStatus(int camionId) async {
+    print('Resetting sync status for camion $camionId');
+
+    // Reset camion sync status
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      DatabaseHelper.tableCamionDecharge,
+      {'is_synced': 0, 'server_id': null},
+      where: 'id_decharge = ?',
+      whereArgs: [camionId],
+    );
+
+    // Reset quality tests sync status
+    await db.update(
+      DatabaseHelper.tableAgraigeQualite,
+      {'is_synced': 0, 'server_id': null},
+      where: 'id_camion_decharge = ?',
+      whereArgs: [camionId],
+    );
+
+    // Reset mold tests sync status
+    await db.update(
+      DatabaseHelper.tableAgraigeMoul,
+      {'is_synced': 0, 'server_id': null},
+      where: 'id_camion_decharge = ?',
+      whereArgs: [camionId],
+    );
+
+    print('Sync status reset completed for camion $camionId');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -679,7 +717,7 @@ class _ExportPageState extends State<ExportPage> {
                           },
                         ),
                 ),
-                // Export buttons
+                // Export options and buttons
                 if (_selectedCamions.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(16.0),
@@ -688,7 +726,22 @@ class _ExportPageState extends State<ExportPage> {
                       border: Border(top: BorderSide(color: Colors.grey[300]!)),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Reset sync status option
+                        CheckboxListTile(
+                          title: const Text('Réinitialiser le statut de synchronisation'),
+                          subtitle: const Text('Force la ré-exportation de tous les tests déjà synchronisés'),
+                          value: _resetSyncStatus,
+                          onChanged: (value) {
+                            setState(() {
+                              _resetSyncStatus = value ?? false;
+                            });
+                          },
+                          dense: true,
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Expanded(

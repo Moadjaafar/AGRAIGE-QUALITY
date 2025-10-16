@@ -50,47 +50,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Future<void> _exportData() async {
-    try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text('Exportation des données...'),
-            ],
-          ),
-        ),
-      );
-
-      final filePath = await ExportService.exportToCSV();
-
-      if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Données exportées avec succès vers: $filePath'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Échec de l\'exportation: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,7 +63,11 @@ class _DashboardPageState extends State<DashboardPage> {
               switch (value) {
                 case 'export':
                   if (AuthService.hasPermission('export')) {
-                    _exportData();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const ExportPage(),
+                      ),
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
