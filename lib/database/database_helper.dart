@@ -4,11 +4,14 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const _databaseName = "fish_industry.db";
-  static const _databaseVersion = 2;
+  static const _databaseVersion = 6;
 
   static const tableCamionDecharge = 'camion_decharge';
   static const tableAgraigeQualite = 'agraige_qualite_tests';
   static const tableAgraigeMoul = 'agraige_moul_tests';
+  static const tableBateau = 'bateau';
+  static const tableFournisseur = 'fournisseur';
+  static const tableUsine = 'usine';
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -33,11 +36,14 @@ class DatabaseHelper {
             id_decharge INTEGER PRIMARY KEY AUTOINCREMENT,
             mat_camion TEXT NOT NULL,
             bateau TEXT,
+            fournisseur TEXT,
+            usine TEXT,
             maree TEXT,
             heure_decharge TEXT,
             heure_traitement TEXT,
             temperature REAL,
             pois_decharge REAL,
+            poids_unitaire_carton INTEGER,
             nbr_agraige_qualite INTEGER,
             nbr_agraige_moule INTEGER,
             is_exported INTEGER DEFAULT 0,
@@ -87,11 +93,99 @@ class DatabaseHelper {
             FOREIGN KEY (id_camion_decharge) REFERENCES $tableCamionDecharge (id_decharge)
           )
           ''');
+
+    await db.execute('''
+          CREATE TABLE $tableBateau (
+            id_bateau INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_bateau TEXT NOT NULL UNIQUE,
+            description TEXT,
+            date_creation TEXT NOT NULL,
+            date_modification TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0,
+            server_id INTEGER
+          )
+          ''');
+
+    await db.execute('''
+          CREATE TABLE $tableFournisseur (
+            id_fournisseur INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_fournisseur TEXT NOT NULL UNIQUE,
+            telephone TEXT,
+            adresse TEXT,
+            email TEXT,
+            description TEXT,
+            date_creation TEXT NOT NULL,
+            date_modification TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0,
+            server_id INTEGER
+          )
+          ''');
+
+    await db.execute('''
+          CREATE TABLE $tableUsine (
+            id_usine INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_usine TEXT NOT NULL UNIQUE,
+            adresse TEXT,
+            description TEXT,
+            date_creation TEXT NOT NULL,
+            date_modification TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0,
+            server_id INTEGER
+          )
+          ''');
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE $tableCamionDecharge ADD COLUMN pois_decharge REAL');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+          CREATE TABLE $tableBateau (
+            id_bateau INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_bateau TEXT NOT NULL UNIQUE,
+            description TEXT,
+            date_creation TEXT NOT NULL,
+            date_modification TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0,
+            server_id INTEGER
+          )
+          ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE $tableCamionDecharge ADD COLUMN fournisseur TEXT');
+      await db.execute('''
+          CREATE TABLE $tableFournisseur (
+            id_fournisseur INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_fournisseur TEXT NOT NULL UNIQUE,
+            telephone TEXT,
+            adresse TEXT,
+            email TEXT,
+            description TEXT,
+            date_creation TEXT NOT NULL,
+            date_modification TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0,
+            server_id INTEGER
+          )
+          ''');
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE $tableCamionDecharge ADD COLUMN usine TEXT');
+      await db.execute('''
+          CREATE TABLE $tableUsine (
+            id_usine INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_usine TEXT NOT NULL UNIQUE,
+            adresse TEXT,
+            description TEXT,
+            date_creation TEXT NOT NULL,
+            date_modification TEXT NOT NULL,
+            is_synced INTEGER DEFAULT 0,
+            server_id INTEGER
+          )
+          ''');
+    }
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE $tableCamionDecharge ADD COLUMN poids_unitaire_carton INTEGER');
     }
   }
 
@@ -114,21 +208,37 @@ class DatabaseHelper {
     Database db = await instance.database;
     List<Map<String, dynamic>> result = await db.query(
       table,
-      where: 'id = ? OR id_decharge = ?',
-      whereArgs: [id, id],
+      where: 'id = ? OR id_decharge = ? OR id_bateau = ? OR id_fournisseur = ? OR id_usine = ?',
+      whereArgs: [id, id, id, id, id],
     );
     return result.isNotEmpty ? result.first : null;
   }
 
   Future<int> update(String table, Map<String, dynamic> row, int id) async {
     Database db = await instance.database;
-    String idColumn = table == tableCamionDecharge ? 'id_decharge' : 'id';
+    String idColumn = table == tableCamionDecharge
+        ? 'id_decharge'
+        : table == tableBateau
+            ? 'id_bateau'
+            : table == tableFournisseur
+                ? 'id_fournisseur'
+                : table == tableUsine
+                    ? 'id_usine'
+                    : 'id';
     return await db.update(table, row, where: '$idColumn = ?', whereArgs: [id]);
   }
 
   Future<int> delete(String table, int id) async {
     Database db = await instance.database;
-    String idColumn = table == tableCamionDecharge ? 'id_decharge' : 'id';
+    String idColumn = table == tableCamionDecharge
+        ? 'id_decharge'
+        : table == tableBateau
+            ? 'id_bateau'
+            : table == tableFournisseur
+                ? 'id_fournisseur'
+                : table == tableUsine
+                    ? 'id_usine'
+                    : 'id';
     return await db.delete(table, where: '$idColumn = ?', whereArgs: [id]);
   }
 
@@ -139,7 +249,15 @@ class DatabaseHelper {
 
   Future<int> markAsSynced(String table, int localId, int serverId) async {
     Database db = await instance.database;
-    String idColumn = table == tableCamionDecharge ? 'id_decharge' : 'id';
+    String idColumn = table == tableCamionDecharge
+        ? 'id_decharge'
+        : table == tableBateau
+            ? 'id_bateau'
+            : table == tableFournisseur
+                ? 'id_fournisseur'
+                : table == tableUsine
+                    ? 'id_usine'
+                    : 'id';
     return await db.update(
       table,
       {'is_synced': 1, 'server_id': serverId},

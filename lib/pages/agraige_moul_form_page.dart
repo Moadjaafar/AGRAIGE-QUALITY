@@ -325,13 +325,16 @@ class _AgraigeMoulFormPageState extends State<AgraigeMoulFormPage> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  'Mold Size Measurements',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                                Flexible(
+                                  child: Text(
+                                    'Mold Size Measurements',
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
                                   ),
                                 ),
-                                const Spacer(),
+                                const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
@@ -343,6 +346,7 @@ class _AgraigeMoulFormPageState extends State<AgraigeMoulFormPage> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.orange[800],
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ),
@@ -413,16 +417,21 @@ class _AgraigeMoulFormPageState extends State<AgraigeMoulFormPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Total des valeurs:',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                'Total des valeurs:',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '$_currentTotal / 100',
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
+                                fontSize: 20,
                                 color: _currentTotal == 100 ? Colors.green[700] : Colors.red,
                               ),
                             ),

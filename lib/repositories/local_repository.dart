@@ -2,6 +2,9 @@ import '../database/database_helper.dart';
 import '../models/camion_decharge.dart';
 import '../models/agraige_qualite_tests.dart';
 import '../models/agraige_moul_tests.dart';
+import '../models/bateau.dart';
+import '../models/fournisseur.dart';
+import '../models/usine.dart';
 
 class LocalRepository {
   final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
@@ -302,5 +305,209 @@ class LocalRepository {
         await _updateCamionTestCounts(camion.idDecharge!);
       }
     }
+  }
+
+  // Bateau CRUD operations
+  Future<int> insertBateau(Bateau bateau) async {
+    return await _databaseHelper.insert(
+      DatabaseHelper.tableBateau,
+      bateau.toDatabase(),
+    );
+  }
+
+  Future<List<Bateau>> getAllBateaux() async {
+    final maps = await _databaseHelper.queryAll(DatabaseHelper.tableBateau);
+    return maps.map((map) => Bateau.fromDatabase(map)).toList();
+  }
+
+  Future<Bateau?> getBateauById(int id) async {
+    final map = await _databaseHelper.queryById(DatabaseHelper.tableBateau, id);
+    return map != null ? Bateau.fromDatabase(map) : null;
+  }
+
+  Future<Bateau?> getBateauByName(String nomBateau) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableBateau,
+      where: 'nom_bateau = ?',
+      whereArgs: [nomBateau],
+    );
+    return maps.isNotEmpty ? Bateau.fromDatabase(maps.first) : null;
+  }
+
+  Future<int> updateBateau(int id, Bateau bateau) async {
+    final updatedBateau = bateau.copyWith(
+      dateModification: DateTime.now(),
+    );
+    return await _databaseHelper.update(
+      DatabaseHelper.tableBateau,
+      updatedBateau.toDatabase(),
+      id,
+    );
+  }
+
+  Future<int> deleteBateau(int id) async {
+    return await _databaseHelper.delete(DatabaseHelper.tableBateau, id);
+  }
+
+  Future<List<Bateau>> getUnsyncedBateaux() async {
+    final maps = await _databaseHelper.getUnsyncedRecords(DatabaseHelper.tableBateau);
+    return maps.map((map) => Bateau.fromDatabase(map)).toList();
+  }
+
+  Future<int> markBateauAsSynced(int localId, int serverId) async {
+    return await _databaseHelper.markAsSynced(
+      DatabaseHelper.tableBateau,
+      localId,
+      serverId,
+    );
+  }
+
+  Future<bool> isBateauNameUnique(String nomBateau, {int? excludeId}) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableBateau,
+      where: excludeId != null
+          ? 'nom_bateau = ? AND id_bateau != ?'
+          : 'nom_bateau = ?',
+      whereArgs: excludeId != null ? [nomBateau, excludeId] : [nomBateau],
+    );
+    return maps.isEmpty;
+  }
+
+  // Fournisseur CRUD operations
+  Future<int> insertFournisseur(Fournisseur fournisseur) async {
+    return await _databaseHelper.insert(
+      DatabaseHelper.tableFournisseur,
+      fournisseur.toDatabase(),
+    );
+  }
+
+  Future<List<Fournisseur>> getAllFournisseurs() async {
+    final maps = await _databaseHelper.queryAll(DatabaseHelper.tableFournisseur);
+    return maps.map((map) => Fournisseur.fromDatabase(map)).toList();
+  }
+
+  Future<Fournisseur?> getFournisseurById(int id) async {
+    final map = await _databaseHelper.queryById(DatabaseHelper.tableFournisseur, id);
+    return map != null ? Fournisseur.fromDatabase(map) : null;
+  }
+
+  Future<Fournisseur?> getFournisseurByName(String nomFournisseur) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableFournisseur,
+      where: 'nom_fournisseur = ?',
+      whereArgs: [nomFournisseur],
+    );
+    return maps.isNotEmpty ? Fournisseur.fromDatabase(maps.first) : null;
+  }
+
+  Future<int> updateFournisseur(int id, Fournisseur fournisseur) async {
+    final updatedFournisseur = fournisseur.copyWith(
+      dateModification: DateTime.now(),
+    );
+    return await _databaseHelper.update(
+      DatabaseHelper.tableFournisseur,
+      updatedFournisseur.toDatabase(),
+      id,
+    );
+  }
+
+  Future<int> deleteFournisseur(int id) async {
+    return await _databaseHelper.delete(DatabaseHelper.tableFournisseur, id);
+  }
+
+  Future<List<Fournisseur>> getUnsyncedFournisseurs() async {
+    final maps = await _databaseHelper.getUnsyncedRecords(DatabaseHelper.tableFournisseur);
+    return maps.map((map) => Fournisseur.fromDatabase(map)).toList();
+  }
+
+  Future<int> markFournisseurAsSynced(int localId, int serverId) async {
+    return await _databaseHelper.markAsSynced(
+      DatabaseHelper.tableFournisseur,
+      localId,
+      serverId,
+    );
+  }
+
+  Future<bool> isFournisseurNameUnique(String nomFournisseur, {int? excludeId}) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableFournisseur,
+      where: excludeId != null
+          ? 'nom_fournisseur = ? AND id_fournisseur != ?'
+          : 'nom_fournisseur = ?',
+      whereArgs: excludeId != null ? [nomFournisseur, excludeId] : [nomFournisseur],
+    );
+    return maps.isEmpty;
+  }
+
+  // Usine CRUD operations
+  Future<int> insertUsine(Usine usine) async {
+    return await _databaseHelper.insert(
+      DatabaseHelper.tableUsine,
+      usine.toDatabase(),
+    );
+  }
+
+  Future<List<Usine>> getAllUsines() async {
+    final maps = await _databaseHelper.queryAll(DatabaseHelper.tableUsine);
+    return maps.map((map) => Usine.fromDatabase(map)).toList();
+  }
+
+  Future<Usine?> getUsineById(int id) async {
+    final map = await _databaseHelper.queryById(DatabaseHelper.tableUsine, id);
+    return map != null ? Usine.fromDatabase(map) : null;
+  }
+
+  Future<Usine?> getUsineByName(String nomUsine) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableUsine,
+      where: 'nom_usine = ?',
+      whereArgs: [nomUsine],
+    );
+    return maps.isNotEmpty ? Usine.fromDatabase(maps.first) : null;
+  }
+
+  Future<int> updateUsine(int id, Usine usine) async {
+    final updatedUsine = usine.copyWith(
+      dateModification: DateTime.now(),
+    );
+    return await _databaseHelper.update(
+      DatabaseHelper.tableUsine,
+      updatedUsine.toDatabase(),
+      id,
+    );
+  }
+
+  Future<int> deleteUsine(int id) async {
+    return await _databaseHelper.delete(DatabaseHelper.tableUsine, id);
+  }
+
+  Future<List<Usine>> getUnsyncedUsines() async {
+    final maps = await _databaseHelper.getUnsyncedRecords(DatabaseHelper.tableUsine);
+    return maps.map((map) => Usine.fromDatabase(map)).toList();
+  }
+
+  Future<int> markUsineAsSynced(int localId, int serverId) async {
+    return await _databaseHelper.markAsSynced(
+      DatabaseHelper.tableUsine,
+      localId,
+      serverId,
+    );
+  }
+
+  Future<bool> isUsineNameUnique(String nomUsine, {int? excludeId}) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableUsine,
+      where: excludeId != null
+          ? 'nom_usine = ? AND id_usine != ?'
+          : 'nom_usine = ?',
+      whereArgs: excludeId != null ? [nomUsine, excludeId] : [nomUsine],
+    );
+    return maps.isEmpty;
   }
 }

@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/camion_decharge.dart';
+import '../models/bateau.dart';
+import '../models/fournisseur.dart';
+import '../models/usine.dart';
 import '../repositories/local_repository.dart';
+import 'bateau_form_page.dart';
+import 'fournisseur_form_page.dart';
+import 'usine_form_page.dart';
 
 class CamionDechargeFormPage extends StatefulWidget {
   final CamionDecharge? camion;
@@ -17,7 +24,6 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
   final LocalRepository _localRepository = LocalRepository();
 
   late final TextEditingController _matCamionController;
-  late final TextEditingController _bateauController;
   late final TextEditingController _mareeController;
   late final TextEditingController _temperatureController;
   late final TextEditingController _poisDechargeController;
@@ -26,15 +32,46 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
   DateTime? _heureTraitement;
   bool _isLoading = false;
 
+  List<Bateau> _bateaux = [];
+  String? _selectedBateauName;
+  List<Fournisseur> _fournisseurs = [];
+  String? _selectedFournisseurName;
+  List<Usine> _usines = [];
+  String? _selectedUsineName;
+  int? _selectedPoidsUnitaireCarton;
+
   bool get _isEditing => widget.camion != null;
+
+  // Helper getters to ensure selected values exist in their respective lists
+  String? get _validatedBateauName {
+    if (_selectedBateauName == null) return null;
+    final exists = _bateaux.any((b) => b.nomBateau == _selectedBateauName);
+    return exists ? _selectedBateauName : null;
+  }
+
+  String? get _validatedFournisseurName {
+    if (_selectedFournisseurName == null) return null;
+    final exists = _fournisseurs.any((f) => f.nomFournisseur == _selectedFournisseurName);
+    return exists ? _selectedFournisseurName : null;
+  }
+
+  String? get _validatedUsineName {
+    if (_selectedUsineName == null) return null;
+    final exists = _usines.any((u) => u.nomUsine == _selectedUsineName);
+    return exists ? _selectedUsineName : null;
+  }
 
   @override
   void initState() {
     super.initState();
 
     _matCamionController = TextEditingController(text: widget.camion?.matCamion ?? '');
-    _bateauController = TextEditingController(text: widget.camion?.bateau ?? '');
-    _mareeController = TextEditingController(text: widget.camion?.maree ?? '');
+    // Extract numeric part from maree (remove 'L' prefix if present)
+    String mareeValue = widget.camion?.maree ?? '';
+    if (mareeValue.startsWith('L')) {
+      mareeValue = mareeValue.substring(1);
+    }
+    _mareeController = TextEditingController(text: mareeValue);
     _temperatureController = TextEditingController(
       text: widget.camion?.temperature?.toString() ?? '',
     );
@@ -44,12 +81,73 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
 
     _heureDecharge = widget.camion?.heureDecharge;
     _heureTraitement = widget.camion?.heureTraitement;
+    _selectedBateauName = widget.camion?.bateau;
+    _selectedFournisseurName = widget.camion?.fournisseur;
+    _selectedUsineName = widget.camion?.usine;
+    _selectedPoidsUnitaireCarton = widget.camion?.poidsUnitaireCarton;
+
+    _loadBateaux();
+    _loadFournisseurs();
+    _loadUsines();
+  }
+
+  Future<void> _loadBateaux() async {
+    try {
+      final bateaux = await _localRepository.getAllBateaux();
+      setState(() {
+        _bateaux = bateaux;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading boats: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadFournisseurs() async {
+    try {
+      final fournisseurs = await _localRepository.getAllFournisseurs();
+      setState(() {
+        _fournisseurs = fournisseurs;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading suppliers: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadUsines() async {
+    try {
+      final usines = await _localRepository.getAllUsines();
+      setState(() {
+        _usines = usines;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading factories: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
     _matCamionController.dispose();
-    _bateauController.dispose();
     _mareeController.dispose();
     _temperatureController.dispose();
     _poisDechargeController.dispose();
@@ -104,11 +202,20 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
     try {
       final now = DateTime.now();
 
+      // Format maree with 'L' prefix
+      String? mareeValue;
+      if (_mareeController.text.trim().isNotEmpty) {
+        final numericValue = _mareeController.text.trim().padLeft(3, '0');
+        mareeValue = 'L$numericValue';
+      }
+
       final camion = CamionDecharge(
         idDecharge: widget.camion?.idDecharge,
         matCamion: _matCamionController.text.trim(),
-        bateau: _bateauController.text.trim().isEmpty ? null : _bateauController.text.trim(),
-        maree: _mareeController.text.trim().isEmpty ? null : _mareeController.text.trim(),
+        bateau: _selectedBateauName,
+        fournisseur: _selectedFournisseurName,
+        usine: _selectedUsineName,
+        maree: mareeValue,
         heureDecharge: _heureDecharge,
         heureTraitement: _heureTraitement,
         temperature: _temperatureController.text.trim().isEmpty
@@ -117,6 +224,7 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
         poisDecharge: _poisDechargeController.text.trim().isEmpty
             ? null
             : double.tryParse(_poisDechargeController.text.trim()),
+        poidsUnitaireCarton: _selectedPoidsUnitaireCarton,
         nbrAgraigeQualite: widget.camion?.nbrAgraigeQualite,
         nbrAgraigeMoule: widget.camion?.nbrAgraigeMoule,
         isExported: widget.camion?.isExported ?? false,
@@ -235,22 +343,175 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
                         textCapitalization: TextCapitalization.characters,
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _bateauController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nom du Bateau',
-                          hintText: 'Saisir le nom du bateau',
-                          prefixIcon: Icon(Icons.directions_boat),
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _validatedBateauName,
+                              decoration: const InputDecoration(
+                                labelText: 'Nom du Bateau',
+                                hintText: 'Select a boat',
+                                prefixIcon: Icon(Icons.directions_boat),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('-- No boat selected --'),
+                                ),
+                                ..._bateaux.map((bateau) {
+                                  return DropdownMenuItem<String>(
+                                    value: bateau.nomBateau,
+                                    child: Text(bateau.nomBateau),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedBateauName = value;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle),
+                            color: Colors.blue[700],
+                            tooltip: 'Add new boat',
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const BateauFormPage(),
+                                ),
+                              );
+                              if (result == true) {
+                                await _loadBateaux();
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _validatedFournisseurName,
+                              decoration: const InputDecoration(
+                                labelText: 'Fournisseur',
+                                hintText: 'Select a supplier',
+                                prefixIcon: Icon(Icons.business),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('-- No supplier selected --'),
+                                ),
+                                ..._fournisseurs.map((fournisseur) {
+                                  return DropdownMenuItem<String>(
+                                    value: fournisseur.nomFournisseur,
+                                    child: Text(fournisseur.nomFournisseur),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedFournisseurName = value;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle),
+                            color: Colors.blue[700],
+                            tooltip: 'Add new supplier',
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const FournisseurFormPage(),
+                                ),
+                              );
+                              if (result == true) {
+                                await _loadFournisseurs();
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _validatedUsineName,
+                              decoration: const InputDecoration(
+                                labelText: 'Usine',
+                                hintText: 'Select a factory',
+                                prefixIcon: Icon(Icons.factory),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('-- No factory selected --'),
+                                ),
+                                ..._usines.map((usine) {
+                                  return DropdownMenuItem<String>(
+                                    value: usine.nomUsine,
+                                    child: Text(usine.nomUsine),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedUsineName = value;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle),
+                            color: Colors.blue[700],
+                            tooltip: 'Add new factory',
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UsineFormPage(),
+                                ),
+                              );
+                              if (result == true) {
+                                await _loadUsines();
+                              }
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _mareeController,
                         decoration: const InputDecoration(
                           labelText: 'Maree',
-                          hintText: 'Enter Maree information',
+                          hintText: '000',
                           prefixIcon: Icon(Icons.waves),
+                          prefix: Text('L ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        onEditingComplete: () {
+                          // Auto-format with leading zeros when user finishes editing
+                          if (_mareeController.text.isNotEmpty) {
+                            final formatted = _mareeController.text.padLeft(3, '0');
+                            setState(() {
+                              _mareeController.text = formatted;
+                            });
+                          }
+                        },
                       ),
                     ],
                   ),
@@ -391,6 +652,38 @@ class _CamionDechargeFormPageState extends State<CamionDechargeFormPage> {
                             }
                           }
                           return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<int>(
+                        value: _selectedPoidsUnitaireCarton,
+                        decoration: const InputDecoration(
+                          labelText: 'Poids unitaire carton',
+                          hintText: 'Select carton unit weight',
+                          prefixIcon: Icon(Icons.inventory_2),
+                        ),
+                        items: const [
+                          DropdownMenuItem<int>(
+                            value: null,
+                            child: Text('-- No weight selected --'),
+                          ),
+                          DropdownMenuItem<int>(
+                            value: 12,
+                            child: Text('12 kg'),
+                          ),
+                          DropdownMenuItem<int>(
+                            value: 20,
+                            child: Text('20 kg'),
+                          ),
+                          DropdownMenuItem<int>(
+                            value: 24,
+                            child: Text('24 kg'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPoidsUnitaireCarton = value;
+                          });
                         },
                       ),
                     ],

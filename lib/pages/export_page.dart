@@ -9,8 +9,6 @@ import '../models/camion_decharge.dart';
 import '../models/agraige_qualite_tests.dart';
 import '../models/agraige_moul_tests.dart';
 import '../repositories/local_repository.dart';
-import '../services/api_service.dart';
-import '../database/database_helper.dart';
 
 class ExportPage extends StatefulWidget {
   const ExportPage({super.key});
@@ -26,7 +24,6 @@ class _ExportPageState extends State<ExportPage> {
   bool _isLoading = true;
   bool _isExporting = false;
   String _searchQuery = '';
-  bool _resetSyncStatus = false;
 
   @override
   void initState() {
@@ -124,11 +121,15 @@ class _ExportPageState extends State<ExportPage> {
     // Headers
     sheet.cell(CellIndex.indexByString('A1')).value = TextCellValue('Immatriculation Camion');
     sheet.cell(CellIndex.indexByString('B1')).value = TextCellValue('Bateau');
-    sheet.cell(CellIndex.indexByString('C1')).value = TextCellValue('Marée');
-    sheet.cell(CellIndex.indexByString('D1')).value = TextCellValue('Heure Déchargement');
-    sheet.cell(CellIndex.indexByString('E1')).value = TextCellValue('Heure Traitement');
-    sheet.cell(CellIndex.indexByString('F1')).value = TextCellValue('Température (°C)');
-    sheet.cell(CellIndex.indexByString('G1')).value = TextCellValue('Date Création');
+    sheet.cell(CellIndex.indexByString('C1')).value = TextCellValue('Fournisseur');
+    sheet.cell(CellIndex.indexByString('D1')).value = TextCellValue('Usine');
+    sheet.cell(CellIndex.indexByString('E1')).value = TextCellValue('Marée');
+    sheet.cell(CellIndex.indexByString('F1')).value = TextCellValue('Heure Déchargement');
+    sheet.cell(CellIndex.indexByString('G1')).value = TextCellValue('Heure Traitement');
+    sheet.cell(CellIndex.indexByString('H1')).value = TextCellValue('Température (°C)');
+    sheet.cell(CellIndex.indexByString('I1')).value = TextCellValue('Poids Décharge (kg)');
+    sheet.cell(CellIndex.indexByString('J1')).value = TextCellValue('Poids unitaire carton');
+    sheet.cell(CellIndex.indexByString('K1')).value = TextCellValue('Date Création');
 
     int currentRow = 2;
 
@@ -136,21 +137,29 @@ class _ExportPageState extends State<ExportPage> {
       // Camion data
       sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue(camion.matCamion);
       sheet.cell(CellIndex.indexByString('B$currentRow')).value = TextCellValue(camion.bateau ?? '');
-      sheet.cell(CellIndex.indexByString('C$currentRow')).value = TextCellValue(camion.maree ?? '');
-      sheet.cell(CellIndex.indexByString('D$currentRow')).value = TextCellValue(
+      sheet.cell(CellIndex.indexByString('C$currentRow')).value = TextCellValue(camion.fournisseur ?? '');
+      sheet.cell(CellIndex.indexByString('D$currentRow')).value = TextCellValue(camion.usine ?? '');
+      sheet.cell(CellIndex.indexByString('E$currentRow')).value = TextCellValue(camion.maree ?? '');
+      sheet.cell(CellIndex.indexByString('F$currentRow')).value = TextCellValue(
         camion.heureDecharge != null
           ? DateFormat('dd/MM/yyyy HH:mm').format(camion.heureDecharge!)
           : ''
       );
-      sheet.cell(CellIndex.indexByString('E$currentRow')).value = TextCellValue(
+      sheet.cell(CellIndex.indexByString('G$currentRow')).value = TextCellValue(
         camion.heureTraitement != null
           ? DateFormat('dd/MM/yyyy HH:mm').format(camion.heureTraitement!)
           : ''
       );
-      sheet.cell(CellIndex.indexByString('F$currentRow')).value = TextCellValue(
+      sheet.cell(CellIndex.indexByString('H$currentRow')).value = TextCellValue(
         camion.temperature?.toString() ?? ''
       );
-      sheet.cell(CellIndex.indexByString('G$currentRow')).value = TextCellValue(
+      sheet.cell(CellIndex.indexByString('I$currentRow')).value = TextCellValue(
+        camion.poisDecharge?.toString() ?? ''
+      );
+      sheet.cell(CellIndex.indexByString('J$currentRow')).value = TextCellValue(
+        camion.poidsUnitaireCarton != null ? '${camion.poidsUnitaireCarton} kg' : ''
+      );
+      sheet.cell(CellIndex.indexByString('K$currentRow')).value = TextCellValue(
         DateFormat('dd/MM/yyyy HH:mm').format(camion.dateCreation)
       );
 
@@ -163,7 +172,7 @@ class _ExportPageState extends State<ExportPage> {
       if (qualiteTests.isNotEmpty || moulTests.isNotEmpty) {
         // Headers for both test types
         sheet.cell(CellIndex.indexByString('A$currentRow')).value = TextCellValue('--- Tests de Qualité ---');
-        sheet.cell(CellIndex.indexByString('D$currentRow')).value = TextCellValue('--- Tests de Moule ---');
+        sheet.cell(CellIndex.indexByString('G$currentRow')).value = TextCellValue('--- Tests de Moule ---');
         currentRow++;
 
         int testRowStart = currentRow;
@@ -279,7 +288,7 @@ class _ExportPageState extends State<ExportPage> {
           maxQualiteRows = qualiteRow - testRowStart;
         }
 
-        // Add mold tests (vertical in columns D-E)
+        // Add mold tests (vertical in columns G-H)
         if (moulTests.isNotEmpty) {
           int moulRow = testRowStart;
 
@@ -294,36 +303,36 @@ class _ExportPageState extends State<ExportPage> {
           double avgMoulTotal = moulTests.map((t) => t.totalQuantity).reduce((a, b) => a + b) / moulTests.length;
 
           for (AgraigeMoulTests test in moulTests) {
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 6-8mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul6_8 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul 6-8mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moul6_8 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 8-10mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul8_10 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul 8-10mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moul8_10 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 10-12mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul10_12 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul 10-12mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moul10_12 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 12-16mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul12_16 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul 12-16mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moul12_16 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 16-20mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul16_20 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul 16-20mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moul16_20 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul 20-26mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moul20_26 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul 20-26mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moul20_26 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moul >30mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.moulGt30 ?? 0);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moul >30mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.moulGt30 ?? 0);
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Total');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = IntCellValue(test.totalQuantity);
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Total');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = IntCellValue(test.totalQuantity);
             moulRow++;
 
             moulRow++; // Empty row between test records
@@ -331,39 +340,39 @@ class _ExportPageState extends State<ExportPage> {
 
           // Add averages section for mold tests
           if (moulTests.length > 1) {
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('=== MOYENNES MOULE ===');
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('=== MOYENNES MOULE ===');
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 6-8mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg6_8.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul 6-8mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avg6_8.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 8-10mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg8_10.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul 8-10mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avg8_10.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 10-12mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg10_12.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul 10-12mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avg10_12.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 12-16mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg12_16.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul 12-16mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avg12_16.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 16-20mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg16_20.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul 16-20mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avg16_20.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul 20-26mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avg20_26.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul 20-26mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avg20_26.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Moul >30mm');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avgGt30.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Moul >30mm');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avgGt30.toStringAsFixed(2)));
             moulRow++;
 
-            sheet.cell(CellIndex.indexByString('D$moulRow')).value = TextCellValue('Moyen Total');
-            sheet.cell(CellIndex.indexByString('E$moulRow')).value = DoubleCellValue(double.parse(avgMoulTotal.toStringAsFixed(2)));
+            sheet.cell(CellIndex.indexByString('G$moulRow')).value = TextCellValue('Moyen Total');
+            sheet.cell(CellIndex.indexByString('H$moulRow')).value = DoubleCellValue(double.parse(avgMoulTotal.toStringAsFixed(2)));
             moulRow++;
           }
 
@@ -389,88 +398,6 @@ class _ExportPageState extends State<ExportPage> {
     return filePath;
   }
 
-  Future<void> _exportToServer() async {
-    if (_selectedCamions.isEmpty) {
-      _showErrorMessage('Veuillez sélectionner au moins un déchargement');
-      return;
-    }
-
-    setState(() {
-      _isExporting = true;
-    });
-
-    try {
-      int successCount = 0;
-      int errorCount = 0;
-
-      for (CamionDecharge camion in _selectedCamions) {
-        try {
-          // Reset sync status if requested
-          if (_resetSyncStatus) {
-            await _resetCamionSyncStatus(camion.idDecharge!);
-          }
-
-          // Always export camion (allows re-export after adding new tests)
-          final serverCamion = await ApiService.createCamionDecharge(camion);
-          int serverCamionId = serverCamion.idDecharge!;
-
-          // Export quality tests (always export with decharge)
-          final qualiteTests = await _localRepository.getQualiteTestsByDechargeId(camion.idDecharge!);
-          print('Found ${qualiteTests.length} quality tests for camion ${camion.matCamion}');
-          for (AgraigeQualiteTests test in qualiteTests) {
-            print('Quality test ${test.id} - isSynced: ${test.isSynced}');
-            // Create a copy of the test with the correct server camion ID
-            final testForServer = test.copyWith(idCamionDecharge: serverCamionId);
-            print('Exporting quality test ${test.id} with server camion ID: $serverCamionId');
-            final serverTest = await ApiService.createQualiteTest(testForServer);
-            await _localRepository.markQualiteTestAsSynced(test.id!, serverTest.id!);
-            print('Successfully exported quality test ${test.id}');
-          }
-
-          // Export mold tests (always export with decharge)
-          final moulTests = await _localRepository.getMoulTestsByDechargeId(camion.idDecharge!);
-          print('Found ${moulTests.length} mold tests for camion ${camion.matCamion}');
-
-          for (AgraigeMoulTests test in moulTests) {
-            print('Mold test ${test.id} - isSynced: ${test.isSynced}');
-            // Create a copy of the test with the correct server camion ID
-            final testForServer = test.copyWith(idCamionDecharge: serverCamionId);
-            print('Exporting mold test ${test.id} with server camion ID: $serverCamionId');
-            final serverTest = await ApiService.createMoulTest(testForServer);
-            await _localRepository.markMoulTestAsSynced(test.id!, serverTest.id!);
-            print('Successfully exported mold test ${test.id}');
-          }
-
-          successCount++;
-        } catch (e) {
-          errorCount++;
-          debugPrint('Erreur pour le camion ${camion.matCamion}: $e');
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _isExporting = false;
-        });
-
-        if (successCount > 0) {
-          _showSuccessMessage(
-            'Exportation réussie: $successCount déchargements exportés${errorCount > 0 ? ', $errorCount erreurs' : ''}'
-          );
-          _loadCamions(); // Refresh to show sync status
-        } else {
-          _showErrorMessage('Aucun déchargement n\'a pu être exporté');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isExporting = false;
-        });
-        _showErrorMessage('Erreur lors de l\'exportation serveur: $e');
-      }
-    }
-  }
 
   void _showExportSuccessDialog(String filePath) {
     showDialog(
@@ -562,37 +489,6 @@ class _ExportPageState extends State<ExportPage> {
         backgroundColor: Colors.green,
       ),
     );
-  }
-
-  Future<void> _resetCamionSyncStatus(int camionId) async {
-    print('Resetting sync status for camion $camionId');
-
-    // Reset camion sync status
-    final db = await DatabaseHelper.instance.database;
-    await db.update(
-      DatabaseHelper.tableCamionDecharge,
-      {'is_synced': 0, 'server_id': null},
-      where: 'id_decharge = ?',
-      whereArgs: [camionId],
-    );
-
-    // Reset quality tests sync status
-    await db.update(
-      DatabaseHelper.tableAgraigeQualite,
-      {'is_synced': 0, 'server_id': null},
-      where: 'id_camion_decharge = ?',
-      whereArgs: [camionId],
-    );
-
-    // Reset mold tests sync status
-    await db.update(
-      DatabaseHelper.tableAgraigeMoul,
-      {'is_synced': 0, 'server_id': null},
-      where: 'id_camion_decharge = ?',
-      whereArgs: [camionId],
-    );
-
-    print('Sync status reset completed for camion $camionId');
   }
 
   @override
@@ -690,22 +586,6 @@ class _ExportPageState extends State<ExportPage> {
                                   children: [
                                     if (camion.bateau != null) Text('Bateau: ${camion.bateau}'),
                                     Text('Créé: ${DateFormat('dd/MM/yyyy HH:mm').format(camion.dateCreation)}'),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          camion.isSynced ? Icons.cloud_done : Icons.cloud_off,
-                                          size: 16,
-                                          color: camion.isSynced ? Colors.green : Colors.orange,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          camion.isSynced ? 'Synchronisé' : 'Non synchronisé',
-                                          style: TextStyle(
-                                            color: camion.isSynced ? Colors.green : Colors.orange,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                   ],
                                 ),
                                 secondary: Icon(
@@ -717,7 +597,7 @@ class _ExportPageState extends State<ExportPage> {
                           },
                         ),
                 ),
-                // Export options and buttons
+                // Export button
                 if (_selectedCamions.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(16.0),
@@ -726,62 +606,23 @@ class _ExportPageState extends State<ExportPage> {
                       border: Border(top: BorderSide(color: Colors.grey[300]!)),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Reset sync status option
-                        CheckboxListTile(
-                          title: const Text('Réinitialiser le statut de synchronisation'),
-                          subtitle: const Text('Force la ré-exportation de tous les tests déjà synchronisés'),
-                          value: _resetSyncStatus,
-                          onChanged: (value) {
-                            setState(() {
-                              _resetSyncStatus = value ?? false;
-                            });
-                          },
-                          dense: true,
-                          controlAffinity: ListTileControlAffinity.leading,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _isExporting ? null : _exportToExcel,
-                                icon: _isExporting
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : const Icon(Icons.table_chart),
-                                label: const Text('Exporter Excel'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green[600],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _isExporting ? null : _exportToServer,
-                                icon: _isExporting
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : const Icon(Icons.cloud_upload),
-                                label: const Text('Exporter Serveur'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue[600],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                          ],
+                        ElevatedButton.icon(
+                          onPressed: _isExporting ? null : _exportToExcel,
+                          icon: _isExporting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.table_chart),
+                          label: const Text('Exporter Excel'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[600],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                         if (_isExporting)
                           const Padding(
@@ -789,6 +630,7 @@ class _ExportPageState extends State<ExportPage> {
                             child: Text(
                               'Exportation en cours...',
                               style: TextStyle(fontStyle: FontStyle.italic),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                       ],

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../repositories/local_repository.dart';
-import '../services/export_service.dart';
 import 'login_page.dart';
 import 'camion_decharge_list_page.dart';
 import 'agraige_qualite_list_page.dart';
 import 'agraige_moul_list_page.dart';
+import 'bateau_list_page.dart';
+import 'fournisseur_list_page.dart';
+import 'usine_list_page.dart';
 import 'export_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -58,47 +60,10 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'export':
-                  if (AuthService.hasPermission('export')) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ExportPage(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Vous n\'avez pas les permissions d\'exportation'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
-                  break;
-                case 'logout':
-                  _logout();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              if (AuthService.hasPermission('export'))
-                const PopupMenuItem(
-                  value: 'export',
-                  child: ListTile(
-                    leading: Icon(Icons.download),
-                    title: Text('Exporter les Données'),
-                  ),
-                ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: ListTile(
-                  leading: Icon(Icons.logout),
-                  title: Text('Déconnexion'),
-                ),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Déconnexion',
+            onPressed: _logout,
           ),
         ],
       ),
@@ -145,40 +110,53 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      children: [
-                        _buildDataCard(
-                          'Déchargements Camion',
-                          _dataCounts['camions'] ?? 0,
-                          Icons.local_shipping,
-                          Colors.blue,
-                        ),
-                        _buildDataCard(
-                          'Tests de Qualité',
-                          _dataCounts['qualiteTests'] ?? 0,
-                          Icons.science,
-                          Colors.green,
-                        ),
-                        _buildDataCard(
-                          'Tests de Moule',
-                          _dataCounts['moulTests'] ?? 0,
-                          Icons.straighten,
-                          Colors.orange,
-                        ),
-                        _buildDataCard(
-                          'Enregistrements Non Synchronisés',
-                          (_dataCounts['unsyncedCamions'] ?? 0) +
-                              (_dataCounts['unsyncedQualiteTests'] ?? 0) +
-                              (_dataCounts['unsyncedMoulTests'] ?? 0),
-                          Icons.sync_problem,
-                          Colors.red,
-                        ),
-                      ],
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 200,
+                            child: _buildDataCard(
+                              'Déchargements Camion',
+                              _dataCounts['camions'] ?? 0,
+                              Icons.local_shipping,
+                              Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 200,
+                            child: _buildDataCard(
+                              'Tests de Qualité',
+                              _dataCounts['qualiteTests'] ?? 0,
+                              Icons.science,
+                              Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 200,
+                            child: _buildDataCard(
+                              'Tests de Moule',
+                              _dataCounts['moulTests'] ?? 0,
+                              Icons.straighten,
+                              Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 200,
+                            child: _buildDataCard(
+                              'Enregistrements Non Synchronisés',
+                              (_dataCounts['unsyncedCamions'] ?? 0) +
+                                  (_dataCounts['unsyncedQualiteTests'] ?? 0) +
+                                  (_dataCounts['unsyncedMoulTests'] ?? 0),
+                              Icons.sync_problem,
+                              Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -228,11 +206,53 @@ class _DashboardPageState extends State<DashboardPage> {
                                 );
                               },
                             ),
+                          if (AuthService.hasPermission('write'))
+                            ListTile(
+                              leading: const Icon(Icons.directions_boat, color: Colors.teal),
+                              title: const Text('Gérer les Bateaux'),
+                              subtitle: const Text('Ajouter, modifier ou supprimer des bateaux'),
+                              onTap: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const BateauListPage(),
+                                  ),
+                                );
+                                _loadDashboardData();
+                              },
+                            ),
+                          if (AuthService.hasPermission('write'))
+                            ListTile(
+                              leading: const Icon(Icons.business, color: Colors.indigo),
+                              title: const Text('Gérer les Fournisseurs'),
+                              subtitle: const Text('Ajouter, modifier ou supprimer des fournisseurs'),
+                              onTap: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const FournisseurListPage(),
+                                  ),
+                                );
+                                _loadDashboardData();
+                              },
+                            ),
+                          if (AuthService.hasPermission('write'))
+                            ListTile(
+                              leading: const Icon(Icons.factory, color: Colors.deepOrange),
+                              title: const Text('Gérer les Usines'),
+                              subtitle: const Text('Ajouter, modifier ou supprimer des usines'),
+                              onTap: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const UsineListPage(),
+                                  ),
+                                );
+                                _loadDashboardData();
+                              },
+                            ),
                           if (AuthService.hasPermission('export'))
                             ListTile(
                               leading: const Icon(Icons.download, color: Colors.purple),
                               title: const Text('Exporter les Données'),
-                              subtitle: const Text('Exporter vers Excel/WhatsApp/Gmail ou serveur'),
+                              subtitle: const Text('Exporter vers Excel et partager via WhatsApp/Gmail'),
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
